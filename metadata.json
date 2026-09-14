@@ -1,0 +1,6 @@
+{
+  "name": "스토픽 (STOPIC)",
+  "description": "청소년 전용 AI 금융 교육 및 안전한 모의투자 플랫폼",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
