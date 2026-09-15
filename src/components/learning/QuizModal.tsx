@@ -123,18 +123,16 @@ export const QuizModal: React.FC = () => {
                 </span>
               </div>
 
-              {/* Duolingo Pill-style Track with smooth 3D gradient fill */}
-              <div className="w-full h-3.5 bg-[#E5E8EB] rounded-full overflow-hidden relative shadow-inner">
+              {/* Duolingo Pill-style Track with clean flat fill */}
+              <div className="w-full h-3.5 bg-[#E5E8EB] rounded-full overflow-hidden relative">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-[#6C47FF] to-[#8C6FFF] rounded-full relative"
+                  className="h-full bg-[#6C47FF] rounded-full"
                   initial={false}
                   animate={{
                     width: `${((currentIndex + 1) / QUIZ_QUESTIONS.length) * 100}%`,
                   }}
                   transition={{ duration: 0.35, ease: 'easeOut' }}
-                >
-                  <div className="absolute top-0.5 left-1 right-1 h-1 bg-white/35 rounded-full" />
-                </motion.div>
+                />
               </div>
             </div>
 
