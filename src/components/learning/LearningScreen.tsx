@@ -113,7 +113,7 @@ export const LearningScreen: React.FC = () => {
         style={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#FFFFFF' }}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-extrabold text-[#191F28] tracking-tight">배우기 (학습 센터)</h2>
+          <h2 className="text-xl font-extrabold text-[#191F28] tracking-tight">학습 센터</h2>
           {/* Reward Point Badge using Primary Purple (#6C47FF) & Light Purple Tint (#F0ECFF) */}
           <div className="flex items-center gap-1.5 bg-[#F0ECFF] px-3 py-1 rounded-full border border-[#6C47FF]/20 text-[#6C47FF] text-xs font-extrabold">
             <Award className="w-3.5 h-3.5 text-[#6C47FF]" />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Check, Lock } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { TopicBotMascot } from '../companion/TopicBotMascot';
@@ -10,18 +10,24 @@ interface LearningNode {
   level: number;
   status: 'completed' | 'active' | 'unlocked' | 'locked';
   icon: string;
-  hint: string;
-  meme: string;
-  reward: string;
-  lectureId?: string;
+  cx: number;
+  cy: number;
 }
 
 export const SCurveRoadmap: React.FC = () => {
-  const { triggerTopicBotSpeech, setShowQuizModal } = useApp();
+  const { setShowQuizModal } = useApp();
+  const [lockedShakeId, setLockedShakeId] = useState<string | null>(null);
+  const shakeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [activeNodeId, setActiveNodeId] = useState<string>('node-2');
-  const [, setHoveredNodeId] = useState<string | null>(null);
+  useEffect(() => {
+    return () => {
+      if (shakeTimeoutRef.current) {
+        clearTimeout(shakeTimeoutRef.current);
+      }
+    };
+  }, []);
 
+  // 5 Nodes anchored precisely onto the S-curve cubic Bezier path inside 360 x 480 viewBox
   const nodes: LearningNode[] = [
     {
       id: 'node-1',
@@ -30,9 +36,8 @@ export const SCurveRoadmap: React.FC = () => {
       level: 1,
       status: 'completed',
       icon: '🌱',
-      hint: '워런 버핏도 처음엔 1주로 시작했어요! 이 노드는 이미 마스터하셨네요 🏆',
-      meme: '“지우님이 산 주식 1주, 그게 바로 회사 지분의 위대한 시작!”',
-      reward: '완료됨 (+20P)',
+      cx: 180,
+      cy: 48,
     },
     {
       id: 'node-2',
@@ -41,9 +46,8 @@ export const SCurveRoadmap: React.FC = () => {
       level: 2,
       status: 'active',
       icon: '🧺',
-      hint: '스티브 잡스도 처음엔 한 바구니에 사과만 담지 않았어요! 분산투자는 투자의 유일한 공짜 점심이랍니다 🍎',
-      meme: '“몰빵 금지! 내 소중한 용돈은 여러 바구니에 나누어 쏙쏙!”',
-      reward: '+25P / +40XP',
+      cx: 90,
+      cy: 140,
     },
     {
       id: 'node-3',
@@ -52,62 +56,49 @@ export const SCurveRoadmap: React.FC = () => {
       level: 3,
       status: 'unlocked',
       icon: '🩺',
-      hint: '재무제표는 암호문이 아니에요! 혈압 재듯 매출과 영업이익만 훑어보면 회사의 체력이 보인답니다 🩺',
-      meme: '“적자 기업인지 흑자 기업인지 3초 만에 판별하는 치트키!”',
-      reward: '+35P / +50XP',
+      cx: 270,
+      cy: 236,
     },
     {
       id: 'node-4',
       title: 'PER과 PBR의 마법: 저평가 보물찾기',
       shortTitle: 'PER & PBR',
       level: 4,
-      status: 'locked',
+      status: 'unlocked',
       icon: '💎',
-      hint: '워런 버핏의 단골 무기 PER과 PBR! 비싸게 사지 않는 비밀을 곧 파헤치게 될 거예요 💎',
-      meme: '“원가 1만 원짜리 명품을 5천 원에 줍는 저평가 탐색 안경!”',
-      reward: '+30P / +45XP',
+      cx: 90,
+      cy: 332,
     },
     {
       id: 'node-5',
-      title: 'S-Curve 최종 관문: 100만 원 모의투자 실전',
+      title: 'S-Curve 최종 관문: 100만 원 실전 마스터',
       shortTitle: '실전 마스터',
       level: 5,
       status: 'locked',
       icon: '👑',
-      hint: '전설의 100만 원 실전 마스터! 토픽이가 끝까지 페이스메이커로 함께 뛸게요 🏆',
-      meme: '“청소년 투자왕의 왕관을 향해 질주하라!”',
-      reward: '마스터 뱃지 +100P',
+      cx: 180,
+      cy: 424,
     },
   ];
 
-  const handleNodeInteraction = (node: LearningNode) => {
-    setActiveNodeId(node.id);
+  const handleNodeTap = (e: React.MouseEvent, node: LearningNode) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    // Proactively present a concise hint or cheering meme via Topic-bot Zero-Prompt Engine
-    triggerTopicBotSpeech({
-      mood: node.status === 'completed' ? 'greeting' : node.status === 'active' ? 'cheering' : 'mentor',
-      text: node.hint,
-      subText: node.meme,
-      tag: `S-Curve Lv.${node.level} 노드 힌트`,
-      actionLabel: node.status === 'locked' ? undefined : '퀴즈 풀고 노드 클리어',
-      onAction:
-        node.status === 'locked'
-          ? undefined
-          : () => {
-              setShowQuizModal(true);
-            },
-      autoDismissMs: 7000,
-    });
+    if (node.status === 'locked') {
+      if (shakeTimeoutRef.current) {
+        clearTimeout(shakeTimeoutRef.current);
+      }
+      setLockedShakeId(node.id);
+      shakeTimeoutRef.current = setTimeout(() => {
+        setLockedShakeId(null);
+      }, 450);
+      return;
+    }
+
+    // Direct Screen Transition: Immediately trigger full-screen Duolingo quiz
+    setShowQuizModal(true);
   };
-
-  // Coordinates for the 5 nodes in an S-shaped flow inside an SVG viewbox of 360 x 480
-  const nodePositions = [
-    { x: 180, y: 40 },  // Node 1 (Center-top)
-    { x: 90, y: 130 },  // Node 2 (Left)
-    { x: 260, y: 220 }, // Node 3 (Right)
-    { x: 100, y: 310 }, // Node 4 (Left)
-    { x: 180, y: 400 }, // Node 5 (Center-bottom crown)
-  ];
 
   return (
     <div
@@ -128,7 +119,7 @@ export const SCurveRoadmap: React.FC = () => {
               </span>
             </h3>
             <p className="text-[11px] text-[#8B95A1] font-medium mt-0.5">
-              노드를 터치하면 토픽이의 실시간 힌트 & 응원 밈이 나타나요!
+              노드를 터치하면 바로 퀴즈 챌린지가 시작돼요!
             </p>
           </div>
         </div>
@@ -137,97 +128,121 @@ export const SCurveRoadmap: React.FC = () => {
       </div>
 
       {/* S-Curve Interactive Canvas Area */}
-      <div className="relative w-full max-w-[340px] mx-auto h-[460px] bg-gradient-to-b from-[#FAF9FF] to-[#F8F9FA] rounded-2xl border border-[#F0ECFF] overflow-hidden select-none p-2">
-        {/* Background S-Curve Path SVG */}
+      <div className="relative w-full max-w-[340px] mx-auto h-[480px] bg-gradient-to-b from-[#FAF9FF] to-[#F8F9FA] rounded-2xl border border-[#F0ECFF] overflow-hidden select-none">
+        {/* Background S-Curve Path SVG: Mathematically intersects (cx, cy) of each node */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 360 460"
+          viewBox="0 0 360 480"
+          preserveAspectRatio="none"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Completed / Active glowing path */}
+          {/* Base Track Path */}
           <path
-            d="M180 50 C180 90, 90 90, 90 140 C90 190, 260 170, 260 230 C260 280, 100 270, 100 320 C100 370, 180 360, 180 400"
+            d="M 180 48 C 180 94, 90 94, 90 140 C 90 188, 270 188, 270 236 C 270 284, 90 284, 90 332 C 90 378, 180 378, 180 424"
             stroke="#E5DDFF"
             strokeWidth="12"
             strokeLinecap="round"
           />
+
+          {/* Completed Segment (Lv.1 to Lv.2) */}
           <path
-            d="M180 50 C180 90, 90 90, 90 140"
+            d="M 180 48 C 180 94, 90 94, 90 140"
             stroke="#6C47FF"
             strokeWidth="8"
             strokeLinecap="round"
           />
+
+          {/* Dotted Trajectory Path (Lv.2 to Lv.5) precisely through node centers */}
           <path
-            d="M90 140 C90 190, 260 170, 260 230 C260 280, 100 270, 100 320 C100 370, 180 360, 180 400"
+            d="M 90 140 C 90 188, 270 188, 270 236 C 270 284, 90 284, 90 332 C 90 378, 180 378, 180 424"
             stroke="#6C47FF"
-            strokeWidth="6"
-            strokeDasharray="8 8"
-            strokeOpacity="0.4"
+            strokeWidth="4"
+            strokeDasharray="6 8"
+            strokeOpacity="0.55"
             strokeLinecap="round"
           />
         </svg>
 
-        {/* Lesson Nodes Rendered on Path */}
-        {nodes.map((node, index) => {
-          const pos = nodePositions[index];
-          const isSelected = activeNodeId === node.id;
+        {/* Lesson Nodes Rendered on Path with absolute mathematical coordinate anchoring */}
+        {nodes.map((node) => {
           const isCompleted = node.status === 'completed';
           const isActive = node.status === 'active';
           const isLocked = node.status === 'locked';
+          const isShaking = lockedShakeId === node.id;
+
+          // Percentage coordinates directly corresponding to the 360 x 480 SVG coordinate system
+          const leftPercent = (node.cx / 360) * 100;
+          const topPercent = (node.cy / 480) * 100;
 
           return (
             <div
               key={node.id}
               style={{
                 position: 'absolute',
-                left: `${pos.x}px`,
-                top: `${pos.y}px`,
+                left: `${leftPercent}%`,
+                top: `${topPercent}%`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className="z-10 flex flex-col items-center group cursor-pointer"
-              onClick={() => handleNodeInteraction(node)}
-              onMouseEnter={() => {
-                setHoveredNodeId(node.id);
-                handleNodeInteraction(node);
-              }}
-              onMouseLeave={() => setHoveredNodeId(null)}
+              className="z-10 flex flex-col items-center select-none"
             >
-              {/* Pulsing Ring for Active Node */}
+              {/* Pulsing Highlight Ring for Active Node */}
               {isActive && (
                 <div className="absolute -inset-2 rounded-full bg-[#6C47FF]/20 animate-ping pointer-events-none" />
               )}
 
-              {/* Node Circle */}
-              <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${
+              {/* Node Circle Button: 56x56 px centered exactly on (cx, cy) */}
+              <button
+                id={`roadmap-node-${node.id}`}
+                onClick={(e) => handleNodeTap(e, node)}
+                title={isLocked ? `${node.shortTitle} (잠김)` : `${node.shortTitle} 퀴즈 시작`}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform duration-200 ease-out shadow-md select-none ${
                   isCompleted
-                    ? 'bg-[#6C47FF] text-white ring-4 ring-[#F0ECFF]'
+                    ? 'bg-[#6C47FF] text-white ring-4 ring-[#F0ECFF] hover:scale-105 cursor-pointer active:scale-95'
                     : isActive
-                    ? 'bg-gradient-to-br from-[#6C47FF] to-[#8C6FFF] text-white ring-4 ring-[#6C47FF]/30 scale-110 shadow-lg'
+                    ? 'bg-gradient-to-br from-[#6C47FF] to-[#8C6FFF] text-white ring-4 ring-[#6C47FF]/30 scale-110 shadow-lg hover:scale-115 cursor-pointer active:scale-95'
                     : isLocked
-                    ? 'bg-[#E5E8EB] text-[#8B95A1] border-2 border-[#D1D6DB]'
-                    : 'bg-white text-[#6C47FF] border-2 border-[#6C47FF] ring-2 ring-[#F0ECFF]'
+                    ? `node-locked cursor-not-allowed bg-[#E5E8EB] ${
+                        isShaking
+                          ? 'is-shaking border-2 border-[#FF3B30] text-[#FF3B30]'
+                          : 'border-2 border-[#D1D6DB] text-[#8B95A1] opacity-80'
+                      }`
+                    : 'bg-white text-[#6C47FF] border-2 border-[#6C47FF] ring-2 ring-[#F0ECFF] hover:scale-110 cursor-pointer active:scale-95'
                 }`}
               >
                 {isCompleted ? (
                   <Check className="w-6 h-6 stroke-[3]" />
                 ) : isLocked ? (
-                  <Lock className="w-5 h-5 text-[#8B95A1]" />
+                  <Lock
+                    className={`w-5 h-5 transition-colors duration-150 ${
+                      isShaking ? 'text-[#FF3B30]' : 'text-[#8B95A1]'
+                    }`}
+                  />
                 ) : (
-                  <span className="text-xl">{node.icon}</span>
+                  <span className="text-xl leading-none">{node.icon}</span>
                 )}
-              </div>
+              </button>
 
-              {/* Node Label Pill */}
+              {/* Strict Relative Positioning: Label Badge centered directly on the node centerline & dotted path */}
               <div
-                className={`mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shadow-2xs whitespace-nowrap transition-all ${
-                  isSelected
-                    ? 'bg-[#191F28] text-white scale-105'
-                    : 'bg-white/90 backdrop-blur-xs text-[#4E5968] border border-[#F2F4F6]'
-                }`}
+                className="absolute top-full mt-2 left-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shadow-2xs whitespace-nowrap pointer-events-none"
+                style={{
+                  transform: 'translate(-50%, 0)',
+                }}
               >
-                Lv.{node.level} {node.shortTitle}
+                <span
+                  className={`px-2 py-0.5 rounded-full block ${
+                    isActive
+                      ? 'bg-[#191F28] text-white font-black'
+                      : isCompleted
+                      ? 'bg-[#6C47FF]/10 text-[#6C47FF] font-bold border border-[#6C47FF]/20'
+                      : isLocked
+                      ? 'bg-[#E5E8EB] text-[#8B95A1] font-semibold'
+                      : 'bg-white/95 text-[#4E5968] font-bold border border-[#E5E8EB]'
+                  }`}
+                >
+                  Lv.{node.level} {node.shortTitle}
+                </span>
               </div>
             </div>
           );

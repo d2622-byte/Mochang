@@ -87,9 +87,9 @@ export const TopicBotCompanion: React.FC = () => {
       setSpeechText(
         'S-Curve 러닝 패스에 오신 걸 환영해요! 노드를 하나씩 클리어할 때마다 레벨업과 함께 금융 지능이 쑥쑥 자라요! 🎓'
       );
-      setSpeechSubText('각 노드를 터치하면 토픽이의 핵심 힌트와 응원 밈을 볼 수 있어요.');
+      setSpeechSubText('각 노드를 터치하면 바로 퀴즈 챌린지가 시작돼요.');
       setActionButton(null);
-      setIsBubbleVisible(true);
+      setIsBubbleVisible(false);
     } else if (currentTab === 'mypage') {
       setActiveMood('quest');
       setSpeechText(
